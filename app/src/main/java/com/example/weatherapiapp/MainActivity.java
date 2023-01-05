@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -23,6 +24,8 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     Button btn_cityID, btn_getWeatherByID, btn_getWeatherByName;
@@ -44,127 +47,52 @@ public class MainActivity extends AppCompatActivity {
         lv_weatherReport = findViewById(R.id.lv_weatherReports);
 
 
-/////////////////////RESPONSE FROM JSON ARRAY REQUEST///////////////////////////////////////
-//        //click listeners for each button.
-//        btn_cityID.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                // Instantiate the RequestQueue.
-//                RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-//                String url = "https://api.openweathermap.org/data/2.5/weather?q=London&appid=8d5e9ad19165eb94a0849441293c02a0";
-//
-//                JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
-//                    @Override
-//                    public void onResponse(JSONArray response) {
-//                        String cityID = "";
-//                        try {
-//                            JSONObject cityInfo = response.getJSONObject(0);
-//                            cityID = cityInfo.getString('woeid');
-//                        } catch (JSONException e) {
-//                            e.printStackTrace();
-//                        }
-//                        Toast.makeText(MainActivity.this, "City ID= " + cityID.toString(), Toast.LENGTH_SHORT).show();
-//                    }
-//                }, new Response.ErrorListener() {
-//                    @Override
-//                    public void onErrorResponse(VolleyError error) {
-//                        Toast.makeText(MainActivity.this, "" + error, Toast.LENGTH_SHORT).show();
-//                        // Get a reference to the TextView
-//                        TextView errorTextView = findViewById(R.id.et_dataInput);
-//                        // Set the text of the TextView to the error message
-//                        errorTextView.setText(error.toString());
-//                        // Show an error on the console
-//                        Log.e("MyActivity", "An error occurred: " + error.toString());
-//                    }
-//                });
-//                queue.add(request);
-/////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////RESPONSE FROM JSON OBJECT REQUEST//////////////////////////////////
+        final WeatherDataService weatherDataService = new WeatherDataService(MainActivity.this);
+
+
         btn_cityID.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Instantiate the RequestQueue.
-                ////////////USE SINGLETON TO GET A REQUESTQUEUE///////////////////////
-                //RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
-                String url = "https://api.openweathermap.org/data/2.5/weather?q="+ et_dataInput.getText().toString() + "&appid=8d5e9ad19165eb94a0849441293c02a0";
-                JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                //This didn't return anything.
+                weatherDataService.getCityID(et_dataInput.getText().toString(), new WeatherDataService.VolleyResponseListener() {
                     @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-//////////////////////////////Show API Response lon and lat ///////////////////////////////////////////////
-//                            JSONObject coord = response.getJSONObject("coord");
-//                            double lon = coord.getDouble("lon");
-//                            double lat = coord.getDouble("lat");
-//                            Toast.makeText(MainActivity.this,"lon: "+lon+",lat: "+ lat, Toast.LENGTH_SHORT).show();
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////Show API Response for weather{}////////////////////////////////////////////////
-//                            JSONArray weatherArray = response.getJSONArray("weather");
-//                            JSONObject weather = weatherArray.getJSONObject(0);
-//                            String main = weather.getString("main");
-//                            String description = weather.getString("description");
-//                            Toast.makeText(MainActivity.this, "Weather: " + main + ", " + description, Toast.LENGTH_SHORT).show();
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////Show {id name cod} from API response////////////////////////////////////////////////////
-                            int id = response.getInt("id");
-                            String name = response.getString("name");
-                            int cod = response.getInt("cod");
-                            Toast.makeText(MainActivity.this, "ID: " + id + ", Name: " + name + ", Cod: " + cod, Toast.LENGTH_SHORT).show();
-                            // Get a reference to the TextView
-                            TextView successTextView = findViewById(R.id.et_dataInput);
-                            // Clear the text of the TextView
-                            successTextView.setText("");
-                            // Set the text of the TextView to the success message
-                            successTextView.setText("ID: " + id + ", Name: " + name + ", Cod: " + cod);
-///////////////////////////////////////////////////////////////////////////////////////////////////////////
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                        //Toast.makeText(MainActivity.this, response.toString(), Toast.LENGTH_SHORT).show();
-
-                        // Show an success on the console
-                        Log.e("MyActivity", "SUCCESS!!: " + response.toString());
+                    public void onError(String message) {
+                        Toast.makeText(MainActivity.this, "Something is wrong", Toast.LENGTH_SHORT).show();
                     }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        ////Volley Error
-//                        Toast.makeText(MainActivity.this, "" + error, Toast.LENGTH_SHORT).show();
-//                        // Get a reference to the TextView
-//                        TextView errorTextView = findViewById(R.id.et_dataInput);
-//                        // Set the text of the TextView to the error message
-//                        errorTextView.setText(error.toString());
-//                        // Show an error on the console
-//                        Log.e("MyActivity", "ERROR!!: " + error.toString());
 
-                        //// Parse the error response as a JSON object Error
-                        try {
-                            JSONObject errorResponse = new JSONObject(new String(error.networkResponse.data));
-                            String errorMessage = errorResponse.getString("message");
-                            // Get a reference to the TextView
-                            TextView errorTextView = findViewById(R.id.et_dataInput);
-                            // Set the text of the TextView to the error message
-                            errorTextView.setText(errorMessage);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+                    @Override
+                    public void onResponse(String cityID) {
+                        Toast.makeText(MainActivity.this, "Returned an ID of " + cityID, Toast.LENGTH_SHORT).show();
                     }
                 });
-
-                ////////////USE SINGLETON TO GET A REQUESTQUEUE/////////////////////////////////////
-                //https://google.github.io/volley/requestqueue.html
-                // Add a request (in this example, called stringRequest) to your RequestQueue.
-                MySingleton.getInstance(MainActivity.this).addToRequestQueue(request);
-                //queue.add(request);
             }
         });
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
         // Toast.makeText(MainActivity.this, "You clicked me", Toast.LENGTH_SHORT).show();
         btn_getWeatherByID.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(MainActivity.this, "You clicked me 2", Toast.LENGTH_SHORT).show();
+                //This didn't return anything.
+               weatherDataService.getCityForecastByID(et_dataInput.getText().toString(), new WeatherDataService.ForeCastByIDResponse() {
+                   @Override
+                   public void onError(String message) {
+                       Toast.makeText(MainActivity.this, "Something is wrong",Toast.LENGTH_SHORT).show();
+
+                   }
+
+                   @Override
+                   public void onResponse(List<WeatherReportModel> weatherReportModels) {
+                       //Toast.makeText(MainActivity.this,""+ weatherReportModel.toString(),Toast.LENGTH_SHORT).show();
+                       ArrayAdapter arrayAdapter = new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_1,weatherReportModels);
+                       lv_weatherReport.setAdapter(arrayAdapter);
+
+                       //Print on TextView
+                       // Get a reference to the TextView
+                       //TextView TextView = findViewById(R.id.et_dataInput);
+                       // Set the text of the TextView to the error message
+                       //TextView.setText(weatherReportModel.toString());
+                   }
+               });
             }
         });
         btn_getWeatherByName.setOnClickListener(new View.OnClickListener() {
